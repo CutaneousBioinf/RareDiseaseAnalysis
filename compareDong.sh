@@ -1,0 +1,9 @@
+labICD(){
+        awk 'NR>1{print $1"\n"$2}' ../data/ukb_multimorbidity.txt | cut -f1 -d';' | sort | uniq | awk 'BEGIN{lab["A"]="Infectious/parasitic";lab["C"]="Neoplasms";lab["D"]="Blood";lab["E"]="Endocrine/metabolic";lab["F"]="Neurological";lab["H"]="Eye/ear";lab["I"]="Circulatory system";lab["J"]="Respiratory system";lab["K"]="Digestive system";lab["L"]="Skin/Subcutaneous";lab["M"]="Musculoskeletal";lab["N"]="Genitourinary system";lab["O"]="Pregnancy/childbirth";lab["Q"]="Congenital"}  {a=substr($1,1,1);b=substr($1,2)} a=="D"&&b>=80{print $1"\tOther Immune";next} a=="B"{a="A"} a=="D"&&b<=48{a=="C"} a=="G"{a="F"} a=="P"{a="O"} a>"R"{a="R"} {print $1"\t"lab[a]}'
+}
+
+countComorbid(){
+        awk -F'\t' 'NR==FNR{cat[$1]=$2;next} FNR>1{split($1,a,";");split($2,b,";");print cat[a[1]]"\t"cat[b[1]];print cat[b[1]]"\t"cat[a[1]]}' - ../data/ukb_multimorbidity.txt | sort | uniq -c
+}
+
+labICD | countComorbid | sed 's/^[ ]*//;s/ /\t/' | Rscript -e 'library(gplots);data=read.table("stdin",sep="\t");lab=unique(data[,2]);counts=pval=or=matrix(0,nrow=length(lab),ncol=length(lab),dimnames=list(lab,lab));for(idx in 1:nrow(data))counts[data[idx,2],data[idx,3]]=data[idx,1];for(x in 1:ncol(counts))for(y in 1:nrow(counts)){fish=fisher.test(rbind(c(counts[y,x],sum(counts[,x])-counts[y,x]),c(sum(counts[y,])-counts[y,x],sum(counts)-sum(counts[,x])-sum(counts[y,])+counts[y,x])));pval[y,x]=fish$p.value;or[y,x]=fish$estimate};ourOR=read.table("../data/comorbid.or",sep="\t",check.names=F);res=as.matrix(ourOR[rownames(or),colnames(or)])-as.matrix(or);res[is.infinite(res)]=0;pdf("../results/compareDong.pdf");heatmap.2(res,trace="none",margins=c(12,12),dendrogram="none",Rowv=FALSE,Colv=FALSE,key.title="",key.xlab="   OR (our study) - OR (Dong 2021)",xlab="Rare Disease Group",ylab="Comorbidity Group",keysize=1,col=colorRampPalette(colors = rep(c("red","white","blue"),each=1)));dev.off()'
