@@ -34,6 +34,18 @@ enrich()
 write.table(or,"../data/blairMendComm_or.dat",quote=F,sep="\t")
 write.table(p,"../data/blairMendComm_p.dat",quote=F,sep="\t")
 
+#Plotting for Mendelian diseases from Blair et al.
+library(gplots)
+or=log10(t(as.matrix(read.table("../data/blairMendComm_or.dat",sep="\t",check.names=F))))
+p=t(as.matrix(read.table("../data/blairMendComm_p.dat",sep="\t",check.names=F)))
+or[is.na(or)]=0
+or[or==Inf]=max(or[is.finite(or)])
+or[or==-Inf]=min(or[is.finite(or)])
+pdf("../results/blairMendComm.pdf")
+heatmap.2(or,trace="none",margins=c(14,8),dendrogram="none",Rowv=FALSE,Colv=FALSE,cellnote=ifelse(p<=0.05/ncol(p)/nrow(p),"*",""),key.title="",key.xlab="log10 OR",xlab="Mendelian Disease",ylab="Complex Disease",keysize=1,cexRow=.4,cexCol=.8,col=rev(heat.colors(50)),notecol="black")
+dev.off()
+
+
 #Enrichment for our rare diseases
 commDis=read.table("../data/blairCommon.dat",sep="\t")
 rownames(commDis)=commDis[,1];commDis=commDis[,2,drop=F]
