@@ -75,3 +75,8 @@ or=p=matrix(0,ncol=ncol(data),nrow=nrow(data),dimnames=list(rownames(data),commD
 enrich()
 write.table(or,"../data/blairMendComm_our_or.dat",quote=F,sep="\t")
 write.table(p,"../data/blairMendComm_our_p.dat",quote=F,sep="\t")
+
+#Create tables from our rare diseases
+{ printf  "Rare Disease 1\tOrpha 1\tRare Disease 2\tOrpha 2\t#Individuals\tP-value\tOdds ratio\n"; Rscript -e 'p=read.table("../data/blairMendMend_our_p.dat",sep="\t",check.names=F); or=read.table("../data/blairMendMend_our_or.dat",sep="\t",check.names=F); n=read.table("../data/blairMendMend_our.dat",sep="\t",check.names=F); diag(p)=NA; sig=which(p<0.05/nrow(p)/ncol(p),arr.ind=T); write.table(cbind(rownames(p)[sig[,1]],colnames(p)[sig[,2]],n[sig],p[sig],or[sig]),stdout(),quote=F,sep="\t",col.names=F,row.names=F)' | awk -F'\t' 'NR==FNR{dis[$1]=$3;next} {print dis[$1]"\t"$1"\t"dis[$2]"\t"$2"\t"$3"\t"$4"\t"$5}' ../results/diseases.txt - | sort -nk2,2 -t$'\t'; } > ../results/rare2rare.comorbid
+
+{ printf  "Rare Disease\tOrpha\tComplex Disease\t#Individuals\tP-value\tOdds ratio\n"; Rscript -e 'p=read.table("../data/blairMendComm_our_p.dat",sep="\t",check.names=F); or=read.table("../data/blairMendComm_our_or.dat",sep="\t",check.names=F); n=read.table("../data/blairMendComm_our.dat",sep="\t",check.names=F); sig=which(p<0.05/nrow(p)/ncol(p),arr.ind=T); write.table(cbind(rownames(p)[sig[,1]],colnames(p)[sig[,2]],n[sig],p[sig],or[sig]),stdout(),quote=F,sep="\t",col.names=F,row.names=F)' | awk -F'\t' 'NR==FNR{dis[$1]=$3;next} {print dis[$1]"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5}' ../results/diseases.txt - | sort -nk2,2 -t$'\t'; } > ../results/rare2complex.comorbid
